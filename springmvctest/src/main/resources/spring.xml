@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+	
+	<import resource="spring-dao.xml"/>
+	<import resource="spring-jedis.xml"/>
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<property name="securityManager" ref="securityManager"></property>
+		<property name="loginUrl" value="login.html"></property>
+		<property name="unauthorizedUrl" value="403.html"></property>
+		<property name="filterChainDefinitions">
+			<value>
+				/login.html = anon
+				/subLogin = anon
+				/hello = anon
+				
+				/testRoles = roles["admin","admin1"]
+				/testRoles1 = rolesOr["admin","admin1"]
+				
+				/* = authc
+			</value>
+		</property>
+		<property name="filters">
+			<util:map>
+				<entry key="rolesOr" value-ref="rolesOrFilter"></entry>
+			</util:map>
+		</property>
+	</bean>
+	<bean class="com.zwb.filter.RolesOrFilter" id="rolesOrFilter"></bean>
+	
+	<bean id="securityManager"
+		class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="customRealm" />
+		<property name="sessionManager" ref="sessionManager"/>
+		<property name="cacheManager" ref="cacheManager"/>
+		<property name="rememberMeManager" ref="rememberMeManager"/>
+	</bean>
+	
+	<bean id="customRealm" class="com.zwb.realm.CustomRealm">
+		<property name="credentialsMatcher" ref="matcher"/>
+	</bean>
+	<bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher" id="matcher">
+		<property name="hashAlgorithmName" value="md5"/>
+		<property name="hashIterations" value="1"/>
+	</bean>
+<!-- 默认的sessionManager
+	<bean class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager" id="sessionManager">
+		<property name="sessionDAO" ref="sessionDAO"/>	
+	</bean> -->
+	<bean class="com.zwb.session.CustomSessionManager" id="sessionManager">
+		<property name="sessionDAO" ref="sessionDAO"/>	
+	</bean> 
+	<bean class="com.zwb.session.RedisSessionDao" id="sessionDAO"/>
+	<bean class="com.zwb.cache.RedisCacheManage" id="cacheManager"/>
+	<bean class="org.apache.shiro.web.mgt.CookieRememberMeManager" id="rememberMeManager">
+		<property name="cookie" ref="cookie"/>
+	</bean>
+	<bean class="org.apache.shiro.web.servlet.SimpleCookie" id="cookie">
+		<constructor-arg value="isRemeberMe"/>
+		<property name="maxAge" value="600000"/>
+	</bean>
+</beans>
